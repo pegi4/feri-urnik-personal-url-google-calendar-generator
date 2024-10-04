@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import puppeteer from 'puppeteer';
 
 // Funkcija za pretvorbo query parametrov v predmet-skupina objekt
 function parseSubjects(subjectsParam) {
@@ -86,74 +85,19 @@ function filtrirajIcs(data, predmetSkupina) {
   return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:WISE TIMETABLE\n` + filtriraneVrstice.join('\n') + `\nEND:VCALENDAR`;
 }
 
-async function getTitles(page, filterId) {
-  const subjectFilter = filterId.split(';', 4).pop();
-  if (subjectFilter !== '0') {
-    const ids = subjectFilter.split(',');
-    return await page.evaluate((ids) => {
-      return ids.map(id => document.querySelector(`tr[data-rk="${id}"]`).querySelector('span').innerHTML);
-    }, ids);
-  }
-  return null;
-}
-
-async function clickExport(page) {
-  await page.evaluate(() => {
-    const node = document.querySelector('a[title="Izvoz celotnega urnika v ICS formatu  "]');
-    if (node == null) {
-      throw 'Export button not found';
-    }
-    const handler = node.getAttributeNode('onclick').nodeValue;
-    node.setAttribute('onclick', handler.replace('_blank', '_self'));
-    node.click();
-  });
-}
-
-function setupDownloadHook(page, cookies) {
-  return new Promise(resolve => {
-    page.on('request', async request => {
-      if (request.url() === 'https://www.wise-tt.com/wtt_um_feri/TextViewer') {
-        const response = await fetch(request.url(), {
-          headers: {
-            ...request.headers(),
-            'cookie': cookies.map(cookie => `${cookie.name}=${cookie.value}`).join(';'),
-          }
-        });
-        const data = await response.text();
-        resolve(data);
-      } else {
-        request.continue(); // Redirect 302
-      }
-    });
-  });
-}
-
+// Nova funkcija za pridobivanje koledarja iz zunanjega API-ja
 async function fetchCalendar(filterId) {
-  const browser = await puppeteer.launch();
+  const url = `http://calendar.rwx.si/calendar?filterId=${filterId}`;
   try {
-    const page = await browser.newPage();
-    await page.goto(`https://www.wise-tt.com/wtt_um_feri/index.jsp?filterId=${filterId}`);
-
-    await page.setRequestInterception(true);
-    const cookies = await page.cookies();
-    const download = setupDownloadHook(page, cookies);
-    const titles = await getTitles(page, filterId);
-
-    await clickExport(page);
-    let data = await download;
-
-    if (titles != null) {
-      data = data.replace(/\s*BEGIN:VEVENT[\s\S]*?END:VEVENT\s*/g, event => {
-        return titles.some(title => event.includes(`SUMMARY:${title}`)) ? event : '';
-      });
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Napaka pri pridobivanju podatkov iz API-ja.');
     }
-
-    const position = data.indexOf('BEGIN:VEVENT');
-    data = data.substr(0, position) + 'X-WR-TIMEZONE:Europe/Ljubljana\n' + data.substr(position);
-
-    return data;
-  } finally {
-    await browser.close();
+    const data = await response.text(); // Pridobi vsebino kot besedilo
+    return data; // Vrni ICS podatke
+  } catch (error) {
+    console.error('Napaka pri pridobivanju koledarja:', error);
+    throw new Error('Koledarja ni bilo mogoče pridobiti.');
   }
 }
 
@@ -171,8 +115,8 @@ export async function GET(request) {
     // Pridobi predmet-skupina podatke iz URL-ja
     const predmetSkupina = parseSubjects(subjectsParam);
 
-    // Pridobi podatke iz WISE Timetable preko puppeteerja
-    const data = await fetchCalendar(filterId); // Tukaj uporabi `filterId`, ne `subjectsParam`
+    // Pridobi podatke iz API-ja z uporabo nove funkcije fetchCalendar
+    const data = await fetchCalendar(filterId);
 
     // Filtriraj podatke s pomočjo predmeta in skupin
     const filtriraniPodatki = filtrirajIcs(data, predmetSkupina);
