@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FaCopy, FaTimes } from 'react-icons/fa'; // Import ikone za kopiranje
 
 export default function CalendarPage() {
@@ -27,19 +27,16 @@ export default function CalendarPage() {
   };
 
   // Funkcija za generiranje URL-ja
-  const generateUrl = () => {
-    // Pretvori predmete in skupine v obliko primerno za URL (ime predmeta, skupina)
+  const generateUrl = useCallback(() => {
     const subjectParams = subjects
       .map(subject => {
-        const trimmedName = subject.name.trim(); // Trimaj presledke samo pri generiranju URL-ja
-        const group = subject.group ? subject.group : 'null'; // Če ni skupine, uporabi "null"
+        const trimmedName = subject.name.trim(); 
+        const group = subject.group ? subject.group : 'null'; 
         return `${encodeURIComponent(trimmedName)},${group}`;
       })
-      .join(';'); // Predmeti so ločeni s ";"
-
-    // Ustvari URL z filterId in subjects parametrom
+      .join(';'); 
     return `/api/calendar?filterId=${filterId}&subjects=${subjectParams}`;
-  };
+  }, [filterId, subjects]);
 
   // useEffect, ki se sproži ob vsaki spremembi filterId ali subjects
   useEffect(() => {
