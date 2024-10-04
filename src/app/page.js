@@ -35,7 +35,7 @@ export default function CalendarPage() {
         return `${encodeURIComponent(trimmedName)},${group}`;
       })
       .join(';'); 
-    return `/api/calendar?filterId=${filterId}&subjects=${subjectParams}`;
+    return `https://feri-calendar.vercel.app/api/calendar?filterId=${filterId}&subjects=${subjectParams}`;
   }, [filterId, subjects]);
 
   // useEffect, ki se sproži ob vsaki spremembi filterId ali subjects
@@ -56,7 +56,7 @@ export default function CalendarPage() {
 
   return (
     <div className="p-6 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">Generiraj svoj FERI urnik</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">Generate your own FERI schedule</h1>
 
       {/* Vnos za filterId */}
       <div className="mb-4">
@@ -126,10 +126,10 @@ export default function CalendarPage() {
               onClick={copyToClipboard}
               className="ml-4 bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded flex items-center"
             >
-              <FaCopy className="mr-1" /> Kopiraj
+              <FaCopy className="mr-1" /> Copy
             </button>
           </div>
-          {copied && <span className="text-green-500 mt-2">URL kopiran!</span>}
+          {copied && <span className="text-green-500 mt-2">URL copied!</span>}
         </div>
       )}
     </div>
