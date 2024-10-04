@@ -17,7 +17,7 @@ function dodajVrstoVSummary(eventLines, vrsta) {
   return eventLines.map(line => {
     if (line.startsWith("SUMMARY:")) {
       const predmet = line.split("SUMMARY:")[1].trim();
-      return `SUMMARY:${predmet} (${vrsta})\n`;
+      return `SUMMARY:${predmet} (${vrsta})`;
     }
     return line;
   });
@@ -82,7 +82,7 @@ function filtrirajIcs(data, predmetSkupina) {
     }
   }
 
-  return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:WISE TIMETABLE\n` + filtriraneVrstice.join('\n') + `\nEND:VCALENDAR`;
+  return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:WISE TIMETABLE\nX-WR-TIMEZONE:Europe/Ljubljana\n` + filtriraneVrstice.join('\n') + `\nEND:VCALENDAR`;
 }
 
 // Nova funkcija za pridobivanje koledarja iz zunanjega API-ja
