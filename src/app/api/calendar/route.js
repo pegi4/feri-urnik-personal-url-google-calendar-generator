@@ -185,6 +185,6 @@ export async function GET(request) {
     });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: 'Could not fetch calendar' }, { status: 500 });
+    return NextResponse.json({ error: 'Could not fetch calendar', details: e.message }, { status: 500 });
   }
 }
