@@ -47,7 +47,7 @@ export default function CalendarPage() {
       const newUrl = generateUrl();
       setCalendarUrl(newUrl);
     }
-  }, [filterId, subjects]); // Zasleduj spremembe v filterId in subjects
+  }, [filterId, subjects, generateUrl]); // Zasleduj spremembe v filterId in subjects
 
   // Funkcija za kopiranje URL-ja v odložišče
   const copyToClipboard = () => {
