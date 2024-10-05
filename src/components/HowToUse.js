@@ -1,115 +1,130 @@
 export default function HowToUse() {
   return (
     <div className="p-8 font-sans mt-6 max-w-lg mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-left">
-        Kako uporabljati generator iCalendar URL-jev
+      <h1 className="text-4xl font-bold mb-6 text-center">
+        How to Use the iCalendar URL Generator
       </h1>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Pregled</h2>
+        <h2 className="text-2xl font-semibold mb-4">Overview</h2>
         <p className="text-gray-300">
-          To orodje vam omogoča generiranje prilagojenega URL-ja za iCalendar na
-          podlagi vašega osebnega urnika iz platforme Wise Time Table. 
-          Generirani URL lahko nato dodate v Google Koledar ali druge aplikacije za koledar za enostavno sinhronizacijo. 
-          Lahko določite predmete, pri katerih ste vpisani, in ustrezne skupine za vsak predmet.
+          This tool allows you to generate a customized iCalendar URL based on
+          your personal timetable from the Wise Time Table platform. The
+          generated URL can then be added to Google Calendar or other calendar
+          applications for easy synchronization. You can specify the subjects
+          you&apos;re enrolled in and the respective groups for each subject.
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Zakaj?</h2>
+        <h2 className="text-2xl font-semibold mb-4">Why?</h2>
         <p className="text-gray-300">
-          Wise Time Table izvozi iCalendar datoteke z vsemi predmeti, zaradi česar je lahko nerodno 
-          izločiti nepomembne predmete. To orodje poenostavi postopek, saj vam omogoča, 
-          da določite, katere predmete in skupine želite vključiti v koledar. 
-          Rezultat je čist, prilagojen koledar, ki prikazuje le dogodke, ki so pomembni za vas.
+          The Wise Time Table exports the iCalendar files with all subjects by
+          default, making it cumbersome to filter out irrelevant subjects. This
+          service simplifies the process by allowing you to specify which
+          subjects and groups you want to include in the calendar. The result is
+          a clean, personalized calendar that reflects only the events relevant
+          to you.
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Rešitev</h2>
-        <p className="text-gray-300 mb-2">Generator URL-jev koledarja vam omogoča:</p>
+        <h2 className="text-2xl font-semibold mb-4">Solution</h2>
+        <p className="text-gray-300 mb-2">The Calendar URL Generator lets you:</p>
         <ul className="list-disc list-inside text-gray-300 mb-4">
           <li>
-            Vnesite svoj <strong>Filter ID</strong> (iz Wise Time Table) in izberite predmete in skupine, katerih del ste.
+            Input your <strong>Filter ID</strong> (from the Wise Time Table) and
+            select the subjects and groups you are part of.
           </li>
           <li>
-            Samodejno generirajte URL, ki ga lahko dodate v svoj Google Koledar za samodejno sinhronizacijo.
+            Automatically generate a URL that can be added to your Google
+            Calendar for automatic syncing.
           </li>
           <li>
-            Prilagodite predmete in številke skupin ter prejmite samo dogodke, pomembne za vaš urnik.
+            Customize the subjects and group numbers, and receive only the
+            events relevant to your schedule.
           </li>
         </ul>
         <p className="text-gray-300">
-          Ko imate URL, ga preprosto kopirate in prilepite v Google Koledar, Thunderbird ali katero koli drugo aplikacijo, ki podpira iCalendar URL-je.
+          Once you have the URL, you can simply copy it and paste it into Google
+          Calendar, Thunderbird, or any other calendar application that supports
+          iCalendar URLs.
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Uporaba</h2>
+        <h2 className="text-2xl font-semibold mb-4">Usage</h2>
 
         <h3 className="text-lg font-semibold text-gray-200 mb-2">
-          1. Vnesite Filter ID:
+          1. Enter Filter ID:
         </h3>
         <p className="text-gray-300 mb-4">
-          Pomaknite se na spletno stran Wise Time Table in ustvarite FilterID tako, 
-          da izberete svoje želene možnosti urnika. FilterID lahko pridobite tako, 
-          da na spletnem mestu urnika izberete želene možnosti in nato kliknete na ikono knjige v zgornjem levem kotu. 
-          Dobite stalno povezavo, nato pa morate samo kopirati del FilterID. Na primer, v povezavi:{" "}
+          Navigate to the Wise Time Table website and generate the filterId by
+          selecting your preferred timetable options. The FilterID, which you can get by navigating to the timetable website, selecting the options you want, and then clicking the little book icon at the upper left corner. You will get a permanent link, then you just need to copy the filterId part. For example, in the
+          link:{" "}
           <span className="block rounded-md p-2 mt-2">
             https://www.wise-tt.com/wtt_um_feri/index.jsp?filterId=0;37;0;0
           </span>
-          je{" "}
+          The{" "}
           <code className="text-sm bg-gray-300 text-rose-800 px-2 py-1 rounded">
             0;37;0;0
           </code>{" "}
-          vrednost, ki jo morate vnesti v generator.
+          is the value you need to input in the generator.
         </p>
 
         <h3 className="text-lg font-semibold text-gray-200 mb-2">
-          2. Dodajte predmete in skupine:
+          2. Add Subjects and Groups:
         </h3>
         <p className="text-gray-300 mb-4">
-          Določite predmete, ki jih želite vključiti v svoj koledar. Za vsak predmet lahko določite tudi številko skupine, če je to potrebno. 
-          Če predmet nima skupinskih sej (npr. predavanja), lahko polje za skupino pustite prazno ali uporabite "null" kot nadomestek.
+          Specify the subjects you want to include in your calendar. For each
+          subject, you can also specify the group number if applicable. If a
+          subject doesn&apos;t have group-specific sessions (e.g., lectures), you can
+          leave the group field empty or use &quot;null&quot; as a placeholder.
         </p>
 
         <h3 className="text-lg font-semibold text-gray-200 mb-2">
-          3. Ustvarite URL:
+          3. Generate URL:
         </h3>
         <p className="text-gray-300 mb-4">
-          Ko ste vnesli svoje predmete in skupine, bo orodje samodejno ustvarilo URL. Ta URL bo kazal na filtrirano različico vašega urnika, vključno samo z ustreznimi predmeti in sejami.
+          Once you&apos;ve entered your subjects and groups, the tool will
+          dynamically generate a URL. This URL will point to a filtered version
+          of your timetable, including only the relevant subjects and sessions.
         </p>
 
         <h3 className="text-lg font-semibold text-gray-200 mb-2">
-          4. Kopirajte URL:
+          4. Copy the URL:
         </h3>
         <p className="text-gray-300 mb-4">
-          Uporabite gumb za kopiranje, da preprosto kopirate URL v svoj odložišče. Nato lahko ta URL prilepite v Google Koledar ali katero koli drugo aplikacijo, ki podpira iCal naročnine.
+          Use the copy button to easily copy the URL to your clipboard. You can
+          then paste this URL into Google Calendar or any other calendar app
+          that supports iCal subscriptions.
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-semibold text-gray-200 mb-4">Primer URL-ja:</h2>
+        <h2 className="text-2xl font-semibold text-gray-200 mb-4">Example URL:</h2>
         <span className="block bg-gray-200 text-rose-800 rounded-md p-2 text-sm">
-          http://feri-calendar.vercel.app/api/calendar?filterId=0;37;0;0&subjects=SUBJECT1,1;SUBJECT2,3;SUBJECT3,null
+        https://feri-calendar.vercel.app/api/calendar?filterId=0;37;0;0&subjects=SUBJECT1,1;SUBJECT2,3;SUBJECT3,null
         </span>
       </section>
 
       <section>
         <h2 className="text-2xl font-semibold text-gray-200 mb-4">
-          Integracija z Google Koledarjem
+          Google Calendar Integration
         </h2>
-        <p className="text-gray-300">Za integracijo z Google Koledarjem:</p>
+        <p className="text-gray-300">To integrate with Google Calendar:</p>
         <ul className="list-decimal list-inside text-gray-300 mb-4">
-          <li>Odprite Google Koledar.</li>
+          <li>Open Google Calendar.</li>
           <li>
-            Na levi strani kliknite ikono "+" poleg "Drugi koledarji" in izberite "Iz URL-ja."
+            On the left-hand side, click the &quot;+&quot; icon next to &quot;Other calendars&quot;
+            and select &quot;From URL.&quot;
           </li>
-          <li>Prilepite URL, ki ga je ustvarilo orodje.</li>
-          <li>Kliknite "Dodaj koledar."</li>
+          <li>Paste the URL generated by the tool.</li>
+          <li>Click &quot;Add Calendar.&quot;</li>
         </ul>
         <p className="text-gray-300">
-          Vaš koledar se bo samodejno sinhroniziral z dogodki, filtriranimi na podlagi izbranih predmetov in skupin.
+          Your calendar will automatically sync with the events filtered based
+          on the subjects and groups you&apos;ve selected.
         </p>
       </section>
     </div>
