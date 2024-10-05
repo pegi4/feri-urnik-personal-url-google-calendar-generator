@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { FaCopy, FaTimes } from 'react-icons/fa'; // Import ikone za kopiranje
+import { FaCopy, FaTimes, FaGithub } from 'react-icons/fa'; // Import ikone za kopiranje
 
 export default function CalendarPage() {
   const [filterId, setFilterId] = useState('');
@@ -60,6 +60,16 @@ export default function CalendarPage() {
       <p className='text-center '>
         Ustvari svoj persionaliziran FERI urnik
       </p>
+      <div className="text-center mt-4">
+        <a 
+          href="https://github.com/pegi4/feri-urnik-personal-url-google-calendar-generator"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-gray-500"
+        >
+          <FaGithub size={28} className="inline-block mr-2" />
+        </a>
+      </div>
       <hr className="my-6" />
 
       {/* Vnos za filterId */}
