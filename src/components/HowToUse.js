@@ -2,7 +2,7 @@ export default function HowToUse() {
   return (
     <div className="p-8 font-sans mt-6 max-w-lg mx-auto">
       <h1 className="text-4xl font-bold mb-6 text-center">
-        Kako uporabljati generator iCalendar URL-jev
+        Kako se to uporablja?
       </h1>
 
       <section className="mb-8">
