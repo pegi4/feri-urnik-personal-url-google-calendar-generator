@@ -56,7 +56,11 @@ export default function CalendarPage() {
 
   return (
     <div className="p-6 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">Generate your own FERI schedule</h1>
+      <h1 className="text-3xl font-semibold text-center uppercase">FERI urnik</h1>
+      <p className='text-center '>
+        Ustvari svoj persionaliziran FERI urnik
+      </p>
+      <hr className="my-6" />
 
       {/* Vnos za filterId */}
       <div className="mb-4">
