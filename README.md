@@ -41,8 +41,7 @@ The `filterId=0;37;0;0` is the value you need to input in the generator.
 
 #### Example URL:
 
-http://yourapp.com/api/calendar?filterId=0;37;0;0&subjects=SUBJECT1,1;SUBJECT2,3;SUBJECT3,null
-
+https://feri-calendar.vercel.app/api/calendar?filterId=0;89;0;0;&subjects=PODATKOVNE%20BAZE%20I,2;UVOD%20V%20PLATFORMNO%20ODVISEN%20RAZVOJ%20APLIKACIJ,2;UPORABNI%C5%A0KI%20VMESNIKI,1;OSNOVE%20STATISTIKE,3;DISKRETNA%20MATEMATIKA,null;RA%C4%8CUNALNI%C5%A0KA%20OMRE%C5%BDJA,1
 
 ## Google Calendar Integration
 
