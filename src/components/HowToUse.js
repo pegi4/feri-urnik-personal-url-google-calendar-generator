@@ -69,7 +69,9 @@ export default function HowToUse() {
           2. Dodajte predmete in skupine:
         </h3>
         <p className="text-gray-300 mb-4">
-          Določite predmete, ki jih želite vključiti v svoj koledar. Za vsak predmet lahko določite tudi številko skupine, če je to potrebno. 
+          Vpiši predmet, ki ga želite vključiti v svoj koledar. Ime predmeta mora biti čisto isto kot je v wise time table.
+          <br></br><br></br>
+          Za vsak predmet lahko določite tudi številko skupine, če je to potrebno. 
           Če predmet nima skupinskih sej (npr. predavanja), lahko polje za skupino pustite prazno ali uporabite &quot;null&quot; kot nadomestek.
         </p>
 
