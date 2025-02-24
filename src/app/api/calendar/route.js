@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// Funkcija za pretvorbo query parametrov v predmet-skupina objekt
 function parseSubjects(subjectsParam) {
   const subjectArray = subjectsParam.split(';');
   const predmetSkupina = {};
@@ -23,7 +22,7 @@ function dodajVrstoVSummary(eventLines, vrsta) {
   });
 }
 
-function filtrirajIcs(data, predmetSkupina) {
+function filtrirajIcs(data, module, predmetSkupina) {
   const lines = data.split('\n');
   let filtriraneVrstice = [];
   let isEvent = false;
@@ -34,12 +33,10 @@ function filtrirajIcs(data, predmetSkupina) {
   for (let line of lines) {
     if (line.startsWith("BEGIN:VEVENT")) {
       isEvent = true;
-      currentEvent = [];
+      currentEvent = [line];
       currentPredmet = null;
-      vrstaDogodka = null;
-    }
-
-    if (isEvent) {
+      vrstaDogodka = null; // Reset for each new event
+    } else if (isEvent) {
       currentEvent.push(line);
 
       if (line.startsWith("SUMMARY:")) {
@@ -48,34 +45,45 @@ function filtrirajIcs(data, predmetSkupina) {
 
       if (line.startsWith("DESCRIPTION:")) {
         const description = line.split("DESCRIPTION:")[1].trim();
-        if (description.includes("PR")) {
+        const parts = description.split(','); // Split by comma
+        const eventType = parts[1]?.trim(); // Second element is the event type (PR, SV, RV)
+        
+        if (eventType === "PR") {
           vrstaDogodka = "Predavanje";
-        } else if (description.includes("SV")) {
+        } else if (eventType === "SV") {
           vrstaDogodka = "Seminarske vaje";
-        } else if (description.includes("RV")) {
+        } else if (eventType === "RV") {
           vrstaDogodka = "Računalniške vaje";
         }
+        console.log(`Detected event type for ${currentPredmet}: ${vrstaDogodka} (from "${eventType}")`); // Debugging
       }
-    }
 
-    if (line.startsWith("END:VEVENT")) {
-      isEvent = false;
-      let eventDescription = currentEvent.join('');
+      if (line.startsWith("END:VEVENT")) {
+        isEvent = false;
+        const eventDescription = currentEvent.join('\n');
 
-      if (currentPredmet) {
-        if (eventDescription.includes("RIT 2 VS")) {
-          if (eventDescription.includes("RV")) {
-            const match = eventDescription.match(/RV (\d+)/);
-            if (match) {
-              const skupina = match[1];
-              if (predmetSkupina[currentPredmet] === skupina) {
+        if (currentPredmet && predmetSkupina[currentPredmet] !== undefined) {
+          const includesModule = eventDescription.includes(`RIT 2 VS - ${module}`);
+          if (!includesModule) continue; // Skip if module doesn’t match
+
+          console.log(`Processing event: ${currentPredmet}, Type: ${vrstaDogodka}, Module: ${module}`); // Debugging
+
+          if (vrstaDogodka) { // Ensure vrstaDogodka is set
+            if (vrstaDogodka === "Predavanje" || vrstaDogodka === "Seminarske vaje") {
+              currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+              filtriraneVrstice.push(...currentEvent);
+            } else if (vrstaDogodka === "Računalniške vaje") {
+              const group = predmetSkupina[currentPredmet];
+              if (group && eventDescription.includes(`${module} ${group}`)) {
+                currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                filtriraneVrstice.push(...currentEvent);
+              } else if (!group) {
                 currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
                 filtriraneVrstice.push(...currentEvent);
               }
             }
           } else {
-            currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
-            filtriraneVrstice.push(...currentEvent);
+            console.log(`No event type detected for ${currentPredmet}`); // Debugging
           }
         }
       }
@@ -85,7 +93,6 @@ function filtrirajIcs(data, predmetSkupina) {
   return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:WISE TIMETABLE\nX-WR-TIMEZONE:Europe/Ljubljana\n` + filtriraneVrstice.join('\n') + `\nEND:VCALENDAR`;
 }
 
-// Nova funkcija za pridobivanje koledarja iz zunanjega API-ja
 async function fetchCalendar(filterId) {
   const url = `http://calendar.rwx.si/calendar?filterId=${filterId}`;
   try {
@@ -93,39 +100,32 @@ async function fetchCalendar(filterId) {
     if (!response.ok) {
       throw new Error('Napaka pri pridobivanju podatkov iz API-ja.');
     }
-    const data = await response.text(); // Pridobi vsebino kot besedilo
-    return data; // Vrni ICS podatke
+    return await response.text();
   } catch (error) {
     console.error('Napaka pri pridobivanju koledarja:', error);
     throw new Error('Koledarja ni bilo mogoče pridobiti.');
   }
 }
 
-// API handler funkcija
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const filterId = searchParams.get('filterId');
+  const ModuleModule = searchParams.get('module');
   const subjectsParam = searchParams.get('subjects');
 
-  if (!filterId || !subjectsParam) {
-    return NextResponse.json({ error: 'filterId and subjects are required' }, { status: 400 });
+  if (!filterId || !ModuleModule || !subjectsParam) {
+    return NextResponse.json({ error: 'filterId, module, and subjects are required' }, { status: 400 });
   }
 
   try {
-    // Pridobi predmet-skupina podatke iz URL-ja
     const predmetSkupina = parseSubjects(subjectsParam);
-
-    // Pridobi podatke iz API-ja z uporabo nove funkcije fetchCalendar
     const data = await fetchCalendar(filterId);
+    const filtriraniPodatki = filtrirajIcs(data, ModuleModule, predmetSkupina);
 
-    // Filtriraj podatke s pomočjo predmeta in skupin
-    const filtriraniPodatki = filtrirajIcs(data, predmetSkupina);
-
-    // Vrni filtrirane podatke kot odgovor
     return new NextResponse(filtriraniPodatki, {
       headers: {
         'content-type': 'text/plain; charset=utf-8',
-      }
+      },
     });
   } catch (e) {
     console.error(e);
