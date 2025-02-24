@@ -1,67 +1,61 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { FaCopy, FaTimes, FaGithub } from 'react-icons/fa'; // Import ikone za kopiranje
+import { FaCopy, FaTimes, FaGithub } from 'react-icons/fa';
 
 export default function CalendarPage() {
   const [filterId, setFilterId] = useState('');
-  const [subjects, setSubjects] = useState([{ name: '', group: '' }]); // Seznam predmetov in skupin
+  const [module, setModule] = useState('VP1'); // Default to VP1
+  const [subjects, setSubjects] = useState([{ name: '', group: '' }]);
   const [calendarUrl, setCalendarUrl] = useState('');
-  const [copied, setCopied] = useState(false); // Stanje za spremljanje kopiranja
+  const [copied, setCopied] = useState(false);
 
-  // Funkcija za posodabljanje posameznega predmeta
   const handleSubjectChange = (index, field, value) => {
     const newSubjects = [...subjects];
-    newSubjects[index][field] = value; // Ne obrezuj še, dokler ne generiraš URL-ja
+    newSubjects[index][field] = value;
     setSubjects(newSubjects);
   };
 
-  // Funkcija za dodajanje novega predmeta
   const addSubject = () => {
     setSubjects([...subjects, { name: '', group: '' }]);
   };
 
-  // Funkcija za odstranjevanje predmeta
   const removeSubject = (index) => {
     const newSubjects = subjects.filter((_, i) => i !== index);
     setSubjects(newSubjects);
   };
 
-  // Funkcija za generiranje URL-ja
   const generateUrl = useCallback(() => {
     const subjectParams = subjects
       .map(subject => {
-        const trimmedName = subject.name.trim(); 
-        const group = subject.group ? subject.group : 'null'; 
+        const trimmedName = subject.name.trim();
+        const group = subject.group ? subject.group : 'null';
         return `${encodeURIComponent(trimmedName)},${group}`;
       })
-      .join(';'); 
-    return `https://feri-calendar.vercel.app/api/calendar?filterId=${filterId}&subjects=${subjectParams}`;
-  }, [filterId, subjects]);
+      .join(';');
+    //return `https://feri-calendar.vercel.app/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
+    return `http://localhost:3000/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
+  }, [filterId, module, subjects]);
 
-  // useEffect, ki se sproži ob vsaki spremembi filterId ali subjects
   useEffect(() => {
     if (filterId) {
       const newUrl = generateUrl();
       setCalendarUrl(newUrl);
     }
-  }, [filterId, subjects, generateUrl]); // Zasleduj spremembe v filterId in subjects
+  }, [filterId, module, subjects, generateUrl]);
 
-  // Funkcija za kopiranje URL-ja v odložišče
   const copyToClipboard = () => {
     navigator.clipboard.writeText(calendarUrl).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Pokaži obvestilo za 2 sekundi
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
   return (
     <div className="p-6 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center uppercase">FERI urnik</h1>
-      <p className='text-center '>
-        Ustvari svoj persionaliziran FERI urnik
-      </p>
+      <p className="text-center">Ustvari svoj personaliziran FERI urnik</p>
       <div className="text-center mt-4">
-        <a 
+        <a
           href="https://github.com/pegi4/feri-urnik-personal-url-google-calendar-generator"
           target="_blank"
           rel="noopener noreferrer"
@@ -72,7 +66,7 @@ export default function CalendarPage() {
       </div>
       <hr className="my-6" />
 
-      {/* Vnos za filterId */}
+      {/* Filter ID */}
       <div className="mb-4">
         <label className="block text-lg font-semibold mb-2">Filter ID:</label>
         <input
@@ -84,7 +78,20 @@ export default function CalendarPage() {
         />
       </div>
 
-      {/* Dinamično dodajanje predmetov in skupin */}
+      {/* Module Selection (VP1 or VP2) */}
+      <div className="mb-4">
+        <label className="block text-lg font-semibold mb-2">Module:</label>
+        <select
+          value={module}
+          onChange={(e) => setModule(e.target.value)}
+          className="w-full p-2 text-white bg-black border border-gray-500 rounded focus:outline-none focus:bg-gray-800"
+        >
+          <option value="VP1">VP1</option>
+          <option value="VP2">VP2</option>
+        </select>
+      </div>
+
+      {/* Subjects and Groups */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-4">Subjects and groups:</h2>
         {subjects.map((subject, index) => (
@@ -96,24 +103,21 @@ export default function CalendarPage() {
               onChange={(e) => handleSubjectChange(index, 'name', e.target.value)}
               className="p-2 text-white bg-black border border-gray-500 rounded w-1/2 focus:outline-none focus:bg-gray-800"
             />
-
-            {/* Dropdown za skupine */}
             <select
               value={subject.group}
               onChange={(e) => handleSubjectChange(index, 'group', e.target.value)}
               className="p-2 text-white bg-black border border-gray-500 rounded w-1/4 focus:outline-none focus:bg-gray-800"
             >
               <option value="">Group (optional)</option>
-              {[...Array(10)].map((_, i) => (
-                <option key={i} value={i + 1}>{i + 1}</option>
+              {[...Array(5)].map((_, i) => (
+                <option key={i} value={`RV${i + 1}`}>{`RV${i + 1}`}</option>
               ))}
             </select>
-
             <button
               onClick={() => removeSubject(index)}
               className="text-red-600 font-bold hover:text-red-800"
             >
-              <FaTimes className="mr-1" /> 
+              <FaTimes className="mr-1" />
             </button>
           </div>
         ))}
@@ -125,7 +129,7 @@ export default function CalendarPage() {
         </button>
       </div>
 
-      {/* Prikaz dinamično generiranega URL-ja */}
+      {/* Generated URL */}
       {calendarUrl && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-2">Generated URL:</h2>
