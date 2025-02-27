@@ -2,6 +2,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FaCopy, FaTimes, FaGithub } from 'react-icons/fa';
 
+const predefinedSubjects = [
+  "RAZVOJ PROGRAMSKIH SISTEMOV",
+  "ALGORITMI V RAČUNALNIŠKI PRAKSI",
+  "RAZVOJ APLIKACIJ ZA INTERNET",
+  "OSNOVE RAČUNALNIŠKEGA VIDA",
+  "PROGRAMSKI JEZIKI",
+  "SISTEMSKA ADMINISTRACIJA"
+];
+
 export default function CalendarPage() {
   const [filterId, setFilterId] = useState('');
   const [module, setModule] = useState('VP1'); // Default to VP1
@@ -32,8 +41,8 @@ export default function CalendarPage() {
         return `${encodeURIComponent(trimmedName)},${group}`;
       })
       .join(';');
-    //return `https://feri-calendar.vercel.app/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
-    return `http://localhost:3000/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
+    return `https://feri-calendar.vercel.app/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
+    //return `http://localhost:3000/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
   }, [filterId, module, subjects]);
 
   useEffect(() => {
@@ -96,13 +105,18 @@ export default function CalendarPage() {
         <h2 className="text-lg font-semibold mb-4">Subjects and groups:</h2>
         {subjects.map((subject, index) => (
           <div key={index} className="flex items-center mb-4 space-x-4">
-            <input
-              type="text"
-              placeholder="Subject name"
+            {/* Subject Dropdown */}
+            <select
               value={subject.name}
               onChange={(e) => handleSubjectChange(index, 'name', e.target.value)}
               className="p-2 text-white bg-black border border-gray-500 rounded w-1/2 focus:outline-none focus:bg-gray-800"
-            />
+            >
+              <option value="">Select a subject</option>
+              {predefinedSubjects.map((subj) => (
+                <option key={subj} value={subj}>{subj}</option>
+              ))}
+            </select>
+            {/* Group Dropdown */}
             <select
               value={subject.group}
               onChange={(e) => handleSubjectChange(index, 'group', e.target.value)}
