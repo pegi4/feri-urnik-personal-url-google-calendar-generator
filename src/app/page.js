@@ -32,8 +32,8 @@ export default function CalendarPage() {
         return `${encodeURIComponent(trimmedName)},${group}`;
       })
       .join(';');
-    //return `https://feri-calendar.vercel.app/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
-    return `http://localhost:3000/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
+    return `https://feri-calendar.vercel.app/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
+    //return `http://localhost:3000/api/calendar?filterId=${filterId}&module=${module}&subjects=${subjectParams}`;
   }, [filterId, module, subjects]);
 
   useEffect(() => {

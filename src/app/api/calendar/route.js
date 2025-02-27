@@ -48,14 +48,14 @@ function filtrirajIcs(data, module, predmetSkupina) {
         const parts = description.split(','); // Split by comma
         const eventType = parts[1]?.trim(); // Second element is the event type (PR, SV, RV)
         
-        if (eventType === "PR") {
+        if (eventType?.startsWith("PR")) {
           vrstaDogodka = "Predavanje";
         } else if (eventType === "SV") {
           vrstaDogodka = "Seminarske vaje";
         } else if (eventType === "RV") {
           vrstaDogodka = "Računalniške vaje";
         }
-        console.log(`Detected event type for ${currentPredmet}: ${vrstaDogodka} (from "${eventType}")`); // Debugging
+        console.log(`Detected event type for ${currentPredmet}: ${vrstaDogodka} (from "${eventType}")`);
       }
 
       if (line.startsWith("END:VEVENT")) {
@@ -64,11 +64,11 @@ function filtrirajIcs(data, module, predmetSkupina) {
 
         if (currentPredmet && predmetSkupina[currentPredmet] !== undefined) {
           const includesModule = eventDescription.includes(`RIT 2 VS - ${module}`);
-          if (!includesModule) continue; // Skip if module doesn’t match
+          if (!includesModule) continue;
 
-          console.log(`Processing event: ${currentPredmet}, Type: ${vrstaDogodka}, Module: ${module}`); // Debugging
+          console.log(`Processing event: ${currentPredmet}, Type: ${vrstaDogodka}, Module: ${module}`);
 
-          if (vrstaDogodka) { // Ensure vrstaDogodka is set
+          if (vrstaDogodka) {
             if (vrstaDogodka === "Predavanje" || vrstaDogodka === "Seminarske vaje") {
               currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
               filtriraneVrstice.push(...currentEvent);
@@ -83,7 +83,7 @@ function filtrirajIcs(data, module, predmetSkupina) {
               }
             }
           } else {
-            console.log(`No event type detected for ${currentPredmet}`); // Debugging
+            console.log(`No event type detected for ${currentPredmet}`);
           }
         }
       }
