@@ -63,11 +63,18 @@ function filtrirajIcs(data, module, predmetSkupina) {
         const eventDescription = currentEvent.join('\n');
 
         if (currentPredmet && predmetSkupina[currentPredmet] !== undefined) {
-          // Check for different possible module formats
-          const includesModule = eventDescription.includes(`RIT 3 VS ${module}`) || 
-                                eventDescription.includes(`RIT 2 VS ${module}`) || 
-                                eventDescription.includes(`RIT 2 VS - ${module}`);
-          if (!includesModule) continue;
+          // Check if this is a RIT program (uses VP1/VP2 modules)
+          const isRITProgram = eventDescription.includes('RIT 3 VS') || 
+                              eventDescription.includes('RIT 2 VS');
+          
+          if (isRITProgram) {
+            // For RIT programs, apply module filtering (VP1/VP2)
+            const includesModule = eventDescription.includes(`RIT 3 VS ${module}`) || 
+                                  eventDescription.includes(`RIT 2 VS ${module}`) || 
+                                  eventDescription.includes(`RIT 2 VS - ${module}`);
+            if (!includesModule) continue;
+          }
+          // For non-RIT programs (IPT, etc.), skip module filtering - include all events for the subject
 
           console.log(`Processing event: ${currentPredmet}, Type: ${vrstaDogodka}, Module: ${module}`);
 
@@ -80,35 +87,56 @@ function filtrirajIcs(data, module, predmetSkupina) {
               
               console.log(`Processing RV for ${currentPredmet}, group: ${group}, description: ${eventDescription.split('\n').find(line => line.startsWith('DESCRIPTION:'))}`);
               
-              if (group && group !== 'null' && group !== '' && group !== 'RV') {
-                // Specific numbered group selected (RV1, RV2, etc.)
-                const groupPatterns = [
-                  `${module} ${group}`,           // e.g., "VP2 RV1"
-                  `${module} RV ${group.replace('RV', '')}`, // e.g., "VP2 RV 1"
-                  `VS ${module} ${group}`,        // e.g., "VS VP2 RV1"
-                  `VS ${module} RV ${group.replace('RV', '')}` // e.g., "VS VP2 RV 1"
-                ];
-                
-                const matchesGroup = groupPatterns.some(pattern => eventDescription.includes(pattern));
-                
-                if (matchesGroup) {
-                  console.log(`Found specific group ${group} for ${currentPredmet}`);
-                  currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
-                  filtriraneVrstice.push(...currentEvent);
-                }
-              } else {
-                // No specific group selected OR "RV (Default)" selected - include RV events for this module
-                const hasModuleMatch = eventDescription.includes(`VS ${module}`);
-                
-                if (hasModuleMatch) {
-                  // Check if it's a generic RV event (no specific group number) OR if we want all RV events
-                  const hasSpecificGroup = /RV \d+/.test(eventDescription);
+              if (isRITProgram) {
+                // RIT program - use VP1/VP2 module-based group filtering
+                if (group && group !== 'null' && group !== '' && group !== 'RV') {
+                  // Specific numbered group selected (RV1, RV2, etc.)
+                  const groupPatterns = [
+                    `${module} ${group}`,           // e.g., "VP2 RV1"
+                    `${module} RV ${group.replace('RV', '')}`, // e.g., "VP2 RV 1"
+                    `VS ${module} ${group}`,        // e.g., "VS VP2 RV1"
+                    `VS ${module} RV ${group.replace('RV', '')}` // e.g., "VS VP2 RV 1"
+                  ];
                   
-                  if (!hasSpecificGroup || group === 'RV' || !group || group === 'null') {
-                    console.log(`Including RV event for ${currentPredmet} (default/generic group)`);
+                  const matchesGroup = groupPatterns.some(pattern => eventDescription.includes(pattern));
+                  
+                  if (matchesGroup) {
+                    console.log(`Found specific group ${group} for ${currentPredmet} (RIT program)`);
                     currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
                     filtriraneVrstice.push(...currentEvent);
                   }
+                } else {
+                  // No specific group selected OR "RV (Default)" selected - include RV events for this module
+                  const hasModuleMatch = eventDescription.includes(`VS ${module}`);
+                  
+                  if (hasModuleMatch) {
+                    // Check if it's a generic RV event (no specific group number) OR if we want all RV events
+                    const hasSpecificGroup = /RV \d+/.test(eventDescription);
+                    
+                    if (!hasSpecificGroup || group === 'RV' || !group || group === 'null') {
+                      console.log(`Including RV event for ${currentPredmet} (RIT program, default/generic group)`);
+                      currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                      filtriraneVrstice.push(...currentEvent);
+                    }
+                  }
+                }
+              } else {
+                // Non-RIT program (IPT, etc.) - use different group filtering logic
+                if (group && group !== 'null' && group !== '' && group !== 'RV') {
+                  // Specific numbered group selected (RV1, RV2, etc.) - look for "RV 1", "RV 2" patterns
+                  const groupNumber = group.replace('RV', '').trim();
+                  const hasMatchingGroup = eventDescription.includes(`RV ${groupNumber}`);
+                  
+                  if (hasMatchingGroup) {
+                    console.log(`Found specific group ${group} for ${currentPredmet} (non-RIT program)`);
+                    currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                    filtriraneVrstice.push(...currentEvent);
+                  }
+                } else {
+                  // No specific group selected - include all RV events for this subject
+                  console.log(`Including RV event for ${currentPredmet} (non-RIT program, all groups)`);
+                  currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                  filtriraneVrstice.push(...currentEvent);
                 }
               }
             }
