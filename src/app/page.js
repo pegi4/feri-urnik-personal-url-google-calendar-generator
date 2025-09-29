@@ -255,7 +255,7 @@ export default function CalendarPage() {
                     className="p-2 text-white bg-black border border-gray-500 rounded w-24 focus:outline-none focus:bg-gray-800"
                   >
                     <option value="">Auto</option>
-                    <option value="RV">RV (Default)</option>
+                    <option value="RV">RV</option>
                     {[...Array(5)].map((_, i) => (
                       <option key={i} value={`RV${i + 1}`}>{`RV${i + 1}`}</option>
                     ))}
