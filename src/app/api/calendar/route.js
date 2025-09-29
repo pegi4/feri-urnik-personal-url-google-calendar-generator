@@ -63,7 +63,10 @@ function filtrirajIcs(data, module, predmetSkupina) {
         const eventDescription = currentEvent.join('\n');
 
         if (currentPredmet && predmetSkupina[currentPredmet] !== undefined) {
-          const includesModule = eventDescription.includes(`RIT 2 VS - ${module}`);
+          // Check for different possible module formats
+          const includesModule = eventDescription.includes(`RIT 3 VS ${module}`) || 
+                                eventDescription.includes(`RIT 2 VS ${module}`) || 
+                                eventDescription.includes(`RIT 2 VS - ${module}`);
           if (!includesModule) continue;
 
           console.log(`Processing event: ${currentPredmet}, Type: ${vrstaDogodka}, Module: ${module}`);
@@ -74,12 +77,30 @@ function filtrirajIcs(data, module, predmetSkupina) {
               filtriraneVrstice.push(...currentEvent);
             } else if (vrstaDogodka === "Računalniške vaje") {
               const group = predmetSkupina[currentPredmet];
-              if (group && eventDescription.includes(`${module} ${group}`)) {
-                currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
-                filtriraneVrstice.push(...currentEvent);
-              } else if (!group) {
-                currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
-                filtriraneVrstice.push(...currentEvent);
+              if (group && group !== 'null') {
+                // Specific group selected - check various formats
+                const groupPatterns = [
+                  `${module} ${group}`,           // e.g., "VP2 RV1"
+                  `${module} RV ${group.replace('RV', '')}`, // e.g., "VP2 RV 1"
+                  `VS ${module} ${group}`,        // e.g., "VS VP2 RV1"
+                  `VS ${module} RV ${group.replace('RV', '')}` // e.g., "VS VP2 RV 1"
+                ];
+                
+                const matchesGroup = groupPatterns.some(pattern => eventDescription.includes(pattern));
+                
+                if (matchesGroup) {
+                  console.log(`Found specific group ${group} for ${currentPredmet}`);
+                  currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                  filtriraneVrstice.push(...currentEvent);
+                }
+              } else {
+                // No specific group selected - include all RV events for this module
+                const hasRVForModule = eventDescription.includes(`VS ${module}`) && eventDescription.includes('RV');
+                if (hasRVForModule) {
+                  console.log(`Including RV event for ${currentPredmet} (no specific group selected)`);
+                  currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                  filtriraneVrstice.push(...currentEvent);
+                }
               }
             }
           } else {
@@ -95,20 +116,256 @@ function filtrirajIcs(data, module, predmetSkupina) {
 
 async function fetchCalendar(filterId) {
   const url = `http://calendar.rwx.si/calendar?filterId=${filterId}`;
+  console.log(`Fetching calendar from: ${url}`);
+  
   try {
     const response = await fetch(url);
+    console.log(`Response status: ${response.status} ${response.statusText}`);
+    
     if (!response.ok) {
-      throw new Error('Napaka pri pridobivanju podatkov iz API-ja.');
+      const errorText = await response.text();
+      console.error(`API Error Response: ${errorText}`);
+      throw new Error(`API returned ${response.status}: ${response.statusText}`);
     }
-    return await response.text();
+    
+    const data = await response.text();
+    console.log(`Successfully fetched ${data.length} characters of calendar data`);
+    return data;
   } catch (error) {
-    console.error('Napaka pri pridobivanju koledarja:', error);
-    throw new Error('Koledarja ni bilo mogoče pridobiti.');
+    console.error('Error fetching calendar:', error);
+    if (error.message.includes('fetch')) {
+      throw new Error(`Network error: Could not connect to calendar.rwx.si`);
+    }
+    throw new Error(`Failed to fetch calendar: ${error.message}`);
   }
+}
+
+function mergeCalendars(calendarDataArray) {
+  if (calendarDataArray.length === 0) {
+    return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:WISE TIMETABLE\nX-WR-TIMEZONE:Europe/Ljubljana\nEND:VCALENDAR`;
+  }
+  
+  if (calendarDataArray.length === 1) {
+    return calendarDataArray[0];
+  }
+  
+  // Extract all events from all calendars
+  const allEvents = [];
+  const eventSet = new Set(); // To track unique events and avoid duplicates
+  const conflictingEvents = []; // To track time conflicts
+  
+  calendarDataArray.forEach((calendarData, sourceIndex) => {
+    const lines = calendarData.split('\n');
+    let isEvent = false;
+    let currentEvent = [];
+    
+    for (let line of lines) {
+      if (line.startsWith("BEGIN:VEVENT")) {
+        isEvent = true;
+        currentEvent = [line];
+      } else if (isEvent) {
+        currentEvent.push(line);
+        
+        if (line.startsWith("END:VEVENT")) {
+          isEvent = false;
+          
+          // Create a unique identifier for the event (UID + DTSTART + SUMMARY)
+          const eventKey = generateEventKey(currentEvent);
+          
+          if (!eventSet.has(eventKey)) {
+            eventSet.add(eventKey);
+            
+            // Check for time conflicts with existing events
+            const eventTime = extractEventTime(currentEvent);
+            const conflicts = findTimeConflicts(allEvents, eventTime);
+            
+            if (conflicts.length > 0) {
+              console.warn(`Time conflict detected for event: ${eventTime.summary}`);
+              console.warn(`Conflicts with: ${conflicts.map(c => c.summary).join(', ')}`);
+              
+              // Add conflict warning to event description
+              const modifiedEvent = addConflictWarning(currentEvent, conflicts);
+              allEvents.push(...modifiedEvent);
+              conflictingEvents.push({
+                event: eventTime,
+                conflicts: conflicts
+              });
+            } else {
+              allEvents.push(...currentEvent);
+            }
+          } else {
+            console.log(`Duplicate event detected and skipped: ${eventKey}`);
+          }
+        }
+      }
+    }
+  });
+  
+  // Log summary of conflicts
+  if (conflictingEvents.length > 0) {
+    console.log(`\nSummary: Found ${conflictingEvents.length} time conflicts:`);
+    conflictingEvents.forEach((conflict, index) => {
+      console.log(`${index + 1}. ${conflict.event.summary} (${conflict.event.startTime}) conflicts with:`);
+      conflict.conflicts.forEach(c => {
+        console.log(`   - ${c.summary} (${c.startTime})`);
+      });
+    });
+  }
+  
+  // Sort events by start time for better organization
+  const sortedEvents = sortEventsByDateTime(allEvents);
+  
+  // Build merged calendar
+  return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:WISE TIMETABLE\nX-WR-TIMEZONE:Europe/Ljubljana\n` + 
+         sortedEvents.join('\n') + 
+         `\nEND:VCALENDAR`;
+}
+
+function generateEventKey(eventLines) {
+  let uid = '';
+  let dtstart = '';
+  let summary = '';
+  
+  eventLines.forEach(line => {
+    if (line.startsWith("UID:")) {
+      uid = line;
+    } else if (line.startsWith("DTSTART")) {
+      dtstart = line;
+    } else if (line.startsWith("SUMMARY:")) {
+      summary = line;
+    }
+  });
+  
+  return `${uid}|${dtstart}|${summary}`;
+}
+
+function sortEventsByDateTime(eventLines) {
+  // Group lines into events
+  const events = [];
+  let currentEvent = [];
+  
+  eventLines.forEach(line => {
+    if (line.startsWith("BEGIN:VEVENT")) {
+      currentEvent = [line];
+    } else if (line.startsWith("END:VEVENT")) {
+      currentEvent.push(line);
+      events.push([...currentEvent]);
+      currentEvent = [];
+    } else {
+      currentEvent.push(line);
+    }
+  });
+  
+  // Sort events by DTSTART
+  events.sort((a, b) => {
+    const getStartTime = (event) => {
+      const dtStartLine = event.find(line => line.startsWith("DTSTART"));
+      return dtStartLine ? dtStartLine.split(':')[1] || '' : '';
+    };
+    
+    const startA = getStartTime(a);
+    const startB = getStartTime(b);
+    return startA.localeCompare(startB);
+  });
+  
+  // Flatten back to lines
+  return events.flat();
+}
+
+function extractEventTime(eventLines) {
+  let startTime = '';
+  let endTime = '';
+  let summary = '';
+  
+  eventLines.forEach(line => {
+    if (line.startsWith("DTSTART")) {
+      startTime = line.split(':')[1] || '';
+    } else if (line.startsWith("DTEND")) {
+      endTime = line.split(':')[1] || '';
+    } else if (line.startsWith("SUMMARY:")) {
+      summary = line.split("SUMMARY:")[1] || '';
+    }
+  });
+  
+  return { startTime, endTime, summary };
+}
+
+function findTimeConflicts(existingEvents, newEventTime) {
+  const conflicts = [];
+  
+  // Group existing events
+  const existingEventGroups = [];
+  let currentEvent = [];
+  
+  existingEvents.forEach(line => {
+    if (line.startsWith("BEGIN:VEVENT")) {
+      currentEvent = [line];
+    } else if (line.startsWith("END:VEVENT")) {
+      currentEvent.push(line);
+      existingEventGroups.push([...currentEvent]);
+      currentEvent = [];
+    } else {
+      currentEvent.push(line);
+    }
+  });
+  
+  // Check each existing event for time overlap
+  existingEventGroups.forEach(eventGroup => {
+    const existingEventTime = extractEventTime(eventGroup);
+    
+    if (hasTimeOverlap(newEventTime, existingEventTime)) {
+      conflicts.push(existingEventTime);
+    }
+  });
+  
+  return conflicts;
+}
+
+function hasTimeOverlap(event1, event2) {
+  // Convert time strings to comparable format
+  const start1 = event1.startTime;
+  const end1 = event1.endTime;
+  const start2 = event2.startTime;
+  const end2 = event2.endTime;
+  
+  // Check if events overlap: start1 < end2 && start2 < end1
+  return start1 < end2 && start2 < end1;
+}
+
+function addConflictWarning(eventLines, conflicts) {
+  const modifiedLines = [];
+  let descriptionFound = false;
+  
+  eventLines.forEach(line => {
+    if (line.startsWith("DESCRIPTION:")) {
+      descriptionFound = true;
+      const conflictText = conflicts.map(c => c.summary).join(', ');
+      const newDescription = `${line} ⚠️ TIME CONFLICT with: ${conflictText}`;
+      modifiedLines.push(newDescription);
+    } else if (line.startsWith("END:VEVENT") && !descriptionFound) {
+      // Add description if it doesn't exist
+      const conflictText = conflicts.map(c => c.summary).join(', ');
+      modifiedLines.push(`DESCRIPTION:⚠️ TIME CONFLICT with: ${conflictText}`);
+      modifiedLines.push(line);
+    } else {
+      modifiedLines.push(line);
+    }
+  });
+  
+  return modifiedLines;
 }
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
+  
+  // Check for new multi-source format
+  const sourcesParam = searchParams.get('sources');
+  
+  if (sourcesParam) {
+    return handleMultipleSourcesRequest(sourcesParam);
+  }
+  
+  // Fallback to legacy single-source format for backward compatibility
   const filterId = searchParams.get('filterId');
   const ModuleModule = searchParams.get('module');
   const subjectsParam = searchParams.get('subjects');
@@ -130,5 +387,59 @@ export async function GET(request) {
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: 'Could not fetch calendar', details: e.message }, { status: 500 });
+  }
+}
+
+async function handleMultipleSourcesRequest(sourcesParam) {
+  try {
+    const sources = JSON.parse(decodeURIComponent(sourcesParam));
+    const parsedSources = sources.map(sourceStr => JSON.parse(sourceStr));
+    
+    console.log('Processing multiple sources:', parsedSources.map(s => ({ name: s.name, filterId: s.filterId })));
+    
+    // Fetch all calendars in parallel
+    const calendarPromises = parsedSources.map(async (source) => {
+      try {
+        const data = await fetchCalendar(source.filterId);
+        const predmetSkupina = parseSubjects(source.subjects);
+        const filteredData = filtrirajIcs(data, source.module, predmetSkupina);
+        return { source: source.name, data: filteredData, success: true };
+      } catch (error) {
+        console.error(`Error fetching calendar for ${source.name}:`, error);
+        return { source: source.name, error: error.message, success: false };
+      }
+    });
+    
+    const results = await Promise.all(calendarPromises);
+    const successfulResults = results.filter(result => result.success);
+    const failedResults = results.filter(result => !result.success);
+    
+    if (successfulResults.length === 0) {
+      return NextResponse.json({ 
+        error: 'Could not fetch any calendars', 
+        details: failedResults.map(r => `${r.source}: ${r.error}`)
+      }, { status: 500 });
+    }
+    
+    // Merge all successful calendars
+    const mergedCalendar = mergeCalendars(successfulResults.map(r => r.data));
+    
+    // Log any failures but still return merged result
+    if (failedResults.length > 0) {
+      console.warn('Some calendars failed to load:', failedResults);
+    }
+    
+    return new NextResponse(mergedCalendar, {
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+      },
+    });
+    
+  } catch (e) {
+    console.error('Error processing multiple sources:', e);
+    return NextResponse.json({ 
+      error: 'Could not process multiple calendar sources', 
+      details: e.message 
+    }, { status: 500 });
   }
 }
