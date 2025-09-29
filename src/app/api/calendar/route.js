@@ -77,8 +77,11 @@ function filtrirajIcs(data, module, predmetSkupina) {
               filtriraneVrstice.push(...currentEvent);
             } else if (vrstaDogodka === "Računalniške vaje") {
               const group = predmetSkupina[currentPredmet];
-              if (group && group !== 'null') {
-                // Specific group selected - check various formats
+              
+              console.log(`Processing RV for ${currentPredmet}, group: ${group}, description: ${eventDescription.split('\n').find(line => line.startsWith('DESCRIPTION:'))}`);
+              
+              if (group && group !== 'null' && group !== '' && group !== 'RV') {
+                // Specific numbered group selected (RV1, RV2, etc.)
                 const groupPatterns = [
                   `${module} ${group}`,           // e.g., "VP2 RV1"
                   `${module} RV ${group.replace('RV', '')}`, // e.g., "VP2 RV 1"
@@ -94,12 +97,18 @@ function filtrirajIcs(data, module, predmetSkupina) {
                   filtriraneVrstice.push(...currentEvent);
                 }
               } else {
-                // No specific group selected - include all RV events for this module
-                const hasRVForModule = eventDescription.includes(`VS ${module}`) && eventDescription.includes('RV');
-                if (hasRVForModule) {
-                  console.log(`Including RV event for ${currentPredmet} (no specific group selected)`);
-                  currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
-                  filtriraneVrstice.push(...currentEvent);
+                // No specific group selected OR "RV (Default)" selected - include RV events for this module
+                const hasModuleMatch = eventDescription.includes(`VS ${module}`);
+                
+                if (hasModuleMatch) {
+                  // Check if it's a generic RV event (no specific group number) OR if we want all RV events
+                  const hasSpecificGroup = /RV \d+/.test(eventDescription);
+                  
+                  if (!hasSpecificGroup || group === 'RV' || !group || group === 'null') {
+                    console.log(`Including RV event for ${currentPredmet} (default/generic group)`);
+                    currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                    filtriraneVrstice.push(...currentEvent);
+                  }
                 }
               }
             }
