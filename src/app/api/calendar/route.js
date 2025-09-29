@@ -67,8 +67,8 @@ function filtrirajIcs(data, module, predmetSkupina) {
           const isRITProgram = eventDescription.includes('RIT 3 VS') || 
                               eventDescription.includes('RIT 2 VS');
           
-          if (isRITProgram) {
-            // For RIT programs, apply module filtering (VP1/VP2)
+          if (isRITProgram && module) {
+            // For RIT programs with a module specified, apply module filtering (VP1/VP2)
             const includesModule = eventDescription.includes(`RIT 3 VS ${module}`) || 
                                   eventDescription.includes(`RIT 2 VS ${module}`) || 
                                   eventDescription.includes(`RIT 2 VS - ${module}`);

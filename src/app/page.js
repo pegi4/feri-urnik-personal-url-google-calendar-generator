@@ -34,11 +34,37 @@ export default function CalendarPage() {
   const [calendarUrl, setCalendarUrl] = useState('');
   const [copied, setCopied] = useState(false);
 
+
   const handleScheduleSourceChange = (sourceId, field, value) => {
     setScheduleSources(prevSources => 
-      prevSources.map(source => 
-        source.id === sourceId ? { ...source, [field]: value } : source
-      )
+      prevSources.map(source => {
+        if (source.id === sourceId) {
+          const updatedSource = { ...source, [field]: value };
+          return updatedSource;
+        }
+        return source;
+      })
+    );
+  };
+
+  const handleModuleChange = (sourceId, value) => {
+    setScheduleSources(prevSources =>
+      prevSources.map(source => {
+        if (source.id === sourceId) {
+          const updatedSource = { ...source };
+          
+          if (value === 'CUSTOM') {
+            updatedSource.module = 'CUSTOM';
+            updatedSource.customModule = ''; // Initialize custom module field
+          } else {
+            updatedSource.module = value;
+            delete updatedSource.customModule; // Remove custom module field
+          }
+          
+          return updatedSource;
+        }
+        return source;
+      })
     );
   };
 
@@ -85,7 +111,7 @@ export default function CalendarPage() {
         id: newId,
         name: `Additional College ${newId - 1}`,
         filterId: '',
-        module: 'VP1',
+        module: '', // Default to no module
         subjects: [{ name: '', group: '' }]
       }
     ]);
@@ -116,9 +142,12 @@ export default function CalendarPage() {
         })
         .join(';');
       
+      // Use custom module if available, otherwise use the selected module
+      const effectiveModule = source.module === 'CUSTOM' ? source.customModule : source.module;
+      
       return JSON.stringify({
         filterId: source.filterId,
-        module: source.module,
+        module: effectiveModule,
         subjects: subjectParams,
         name: source.name
       });
@@ -205,13 +234,26 @@ export default function CalendarPage() {
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Module:</label>
               <select
-                value={source.module}
-                onChange={(e) => handleScheduleSourceChange(source.id, 'module', e.target.value)}
+                value={source.module === 'CUSTOM' ? 'CUSTOM' : (source.module || '')}
+                onChange={(e) => handleModuleChange(source.id, e.target.value)}
                 className="w-full p-2 text-white bg-black border border-gray-500 rounded focus:outline-none focus:bg-gray-800"
               >
+                <option value="">No Module</option>
+                <option value="CUSTOM">Custom Module</option>
                 <option value="VP1">VP1</option>
                 <option value="VP2">VP2</option>
               </select>
+              
+              {/* Custom Module Input */}
+              {source.customModule !== undefined && (
+                <input
+                  type="text"
+                  placeholder="Enter custom module name"
+                  value={source.customModule || ''}
+                  onChange={(e) => handleScheduleSourceChange(source.id, 'customModule', e.target.value)}
+                  className="w-full p-2 text-white bg-black border border-gray-500 rounded focus:outline-none focus:bg-gray-800 mt-2"
+                />
+              )}
             </div>
 
             {/* Subjects and Groups */}
