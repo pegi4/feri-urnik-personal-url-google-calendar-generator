@@ -126,8 +126,8 @@ export default function CalendarPage() {
     
     const encodedSources = encodeURIComponent(JSON.stringify(sourcesParam));
     
-    // return `https://feri-calendar.vercel.app/api/calendar?sources=${encodedSources}`;
-    return `http://localhost:3003/api/calendar?sources=${encodedSources}`;
+    const apiHost = process.env.NEXT_PUBLIC_API_HOST || 'http://localhost:3003';
+    return `${apiHost}/api/calendar?sources=${encodedSources}`;
   }, [scheduleSources]);
 
   useEffect(() => {
