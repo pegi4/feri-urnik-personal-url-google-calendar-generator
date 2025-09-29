@@ -359,14 +359,29 @@ function findTimeConflicts(existingEvents, newEventTime) {
 }
 
 function hasTimeOverlap(event1, event2) {
-  // Convert time strings to comparable format
+  // Convert time strings to comparable format (YYYYMMDDTHHMMSS)
   const start1 = event1.startTime;
   const end1 = event1.endTime;
   const start2 = event2.startTime;
   const end2 = event2.endTime;
   
   // Check if events overlap: start1 < end2 && start2 < end1
-  return start1 < end2 && start2 < end1;
+  // Also ensure both events have valid times
+  if (!start1 || !end1 || !start2 || !end2) {
+    return false;
+  }
+  
+  // Only consider it a conflict if there's actual time overlap (not just touching)
+  // And if the events are on the same day
+  const date1 = start1.substring(0, 8); // YYYYMMDD
+  const date2 = start2.substring(0, 8); // YYYYMMDD
+  
+  if (date1 !== date2) {
+    return false; // Different days, no conflict
+  }
+  
+  // Check for actual time overlap (not just adjacent times)
+  return start1 < end2 && start2 < end1 && start1 !== end2 && start2 !== end1;
 }
 
 function addConflictWarning(eventLines, conflicts) {
