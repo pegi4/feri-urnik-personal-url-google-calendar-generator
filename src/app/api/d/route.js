@@ -26,15 +26,15 @@ const SUBJECT_FILTERS = {
     module: 'VP2',
     group: null // No specific group filter
   },
-  // Optional subjects
-  'UVOD V VGRAJENE SISTEME': {
-    program: 'RIT',
-    module: null, // Optional subjects might not have module restrictions
-    group: null
-  },
   'UVOD V RAZVOJ RAČUNALNIŠKIH IGER': {
     program: 'RIT',
-    module: null, // Optional subjects might not have module restrictions
+    module: 'VP2',
+    group: 'RV1' // VP2 RV 1
+  },
+  // Additional subject
+  'ALGORITMI IN TEHNIKE ZA UČINKOVITO REŠEVANJE PROBLEMOV': {
+    program: 'RIT',
+    module: null, // Include all events (VP1 and VP2)
     group: null
   }
 };
