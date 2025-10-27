@@ -168,7 +168,7 @@ async function fetchCalendar(filterId) {
   console.log(`Fetching calendar from: ${url}`);
   
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: 'no-store' });
     console.log(`Response status: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
@@ -202,6 +202,7 @@ export async function GET(request) {
     return new NextResponse(filtriraniPodatki, {
       headers: {
         'content-type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
       },
     });
   } catch (e) {
