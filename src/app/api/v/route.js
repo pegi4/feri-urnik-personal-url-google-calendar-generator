@@ -1,41 +1,16 @@
 import { NextResponse } from 'next/server';
 
-// Hardcoded filterId and subject configurations
-const FILTER_ID = '0;0;0;1501,1444,878,912,909,915';
+// Hardcoded filterId and subject configurations (semester: one subject, group R-IT 3 VS RV - 1. sk)
+const FILTER_ID = '0;580,581;0;1448;';
 
 // Subject configurations with their specific filters
 const SUBJECT_FILTERS = {
-  // RIT subjects
-  'UVOD V EVOLUCIJSKE ALGORITME': {
+  // This semester: only this subject; filter by group "R-IT 3 VS RV - 1. sk"
+  'SOCIOLOŠKI IN POKLICNI VIDIKI': {
     program: 'RIT',
-    module: null, // No filters needed
-    group: null
-  },
-  'STROJNO UČENJE IN ISKANJE NOVEGA ZNANJA': {
-    program: 'RIT',
-    module: null, // No filters needed
-    group: null
-  },
-  'RAČUNALNIŠKA VEČPREDSTAVNOST': {
-    program: 'RIT',
-    module: 'VP2',
-    group: 'RV3'
-  },
-  'RAČUNALNIŠKA GRAFIKA IN ANIMACIJA': {
-    program: 'RIT',
-    module: 'VP1',
-    group: 'RV2'
-  },
-  // IPT subjects
-  'INTELIGENTNO UPRAVLJANJE PROCESOV': {
-    program: 'IPT',
     module: null,
-    group: 'RV2' // RV 2
-  },
-  'KIBERNETSKA VARNOST': {
-    program: 'IPT',
-    module: null,
-    group: 'RV1' // RV 1
+    group: null,
+    groupExact: 'R-IT 3 VS RV - 1. sk' // include only events for this group (RV) or all (PR/SV)
   }
 };
 
@@ -114,9 +89,20 @@ function filtrirajIcs(data, subjectFilters) {
               
             } else if (vrstaDogodka === "Računalniške vaje") {
               const group = subjectConfig.group;
-              
-              console.log(`Processing RV for ${currentPredmet}, group: ${group}, description: ${eventDescription.split('\n').find(line => line.startsWith('DESCRIPTION:'))}`);
-              
+              const groupExact = subjectConfig.groupExact;
+
+              console.log(`Processing RV for ${currentPredmet}, group: ${group}, groupExact: ${groupExact}, description: ${eventDescription.split('\n').find(line => line.startsWith('DESCRIPTION:'))}`);
+
+              // Exact group name match (e.g. "R-IT 3 VS RV - 1. sk")
+              if (groupExact && groupExact !== '') {
+                if (eventDescription.includes(groupExact)) {
+                  console.log(`Found exact group "${groupExact}" for ${currentPredmet}`);
+                  currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
+                  filtriraneVrstice.push(...currentEvent);
+                }
+                continue;
+              }
+
               if (subjectConfig.program === 'RIT') {
                 // RIT program - use VP1/VP2 module-based group filtering
                 if (subjectConfig.module && group && group !== 'null' && group !== '') {
@@ -127,9 +113,9 @@ function filtrirajIcs(data, subjectFilters) {
                     `VS ${subjectConfig.module} ${group}`,        // e.g., "VS VP2 RV3"
                     `VS ${subjectConfig.module} RV ${group.replace('RV', '')}` // e.g., "VS VP2 RV 3"
                   ];
-                  
+
                   const matchesGroup = groupPatterns.some(pattern => eventDescription.includes(pattern));
-                  
+
                   if (matchesGroup) {
                     console.log(`Found specific group ${group} for ${currentPredmet} (RIT program)`);
                     currentEvent = dodajVrstoVSummary(currentEvent, vrstaDogodka);
